@@ -99,6 +99,7 @@ impl<'a, const ARITY: usize, L: Leaf, M: UnitMetric<L>> Iterator
         }
 
         let iter = &mut self.forward;
+        println!("curr iter {:?}", iter);
 
         if !iter.is_initialized {
             iter.initialize();
@@ -145,6 +146,7 @@ impl<const ARITY: usize, L: Leaf, M: DoubleEndedUnitMetric<L>>
         }
 
         let iter = &mut self.backward;
+        println!("curr iter back {:?}", iter);
 
         if !iter.is_initialized {
             iter.initialize();
