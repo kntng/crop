@@ -117,6 +117,9 @@ impl SubAssign<Self> for ChunkSummary {
     #[inline]
     fn sub_assign(&mut self, rhs: Self) {
         self.bytes -= rhs.bytes;
+        println!("LHS {:?}", self);
+        println!("RHS {:?}", rhs);
+
         self.line_breaks -= rhs.line_breaks;
         #[cfg(feature = "utf16-metric")]
         {
@@ -424,6 +427,7 @@ impl<const MAX_BYTES: usize> UnitMetric<GapBuffer<MAX_BYTES>>
     where
         'a: 'a,
     {
+        println!("CHUNK {:?}", chunk);
         let ((first, first_summary), (rest, rest_summary)) =
             chunk.split_at_offset(RawLineMetric(1), summary);
 
@@ -442,11 +446,13 @@ impl<const MAX_BYTES: usize> DoubleEndedUnitMetric<GapBuffer<MAX_BYTES>>
     where
         'a: 'a,
     {
-        let split_offset =
-            summary.line_breaks - (slice.has_trailing_newline() as usize);
+        let split_offset = summary.line_breaks;
 
         let ((rest, rest_summary), (last, last_summary)) =
             slice.split_at_offset(RawLineMetric(split_offset), summary);
+
+        println!("split into {:?} {:?}", rest, rest_summary);
+        println!("and {:?} {:?}", last, last_summary);
 
         (rest, rest_summary, last, last_summary, last_summary)
     }
@@ -459,14 +465,16 @@ impl<const MAX_BYTES: usize> DoubleEndedUnitMetric<GapBuffer<MAX_BYTES>>
     where
         'a: 'a,
     {
-        if chunk.has_trailing_newline() {
-            (chunk, *summary, GapSlice::empty(), ChunkSummary::new())
-        } else {
-            let (rest, rest_summary, last, last_summary, _) =
-                <Self as DoubleEndedUnitMetric<GapBuffer<MAX_BYTES>>>::last_unit(chunk, summary);
+        // if chunk.has_trailing_newline() {
+        //     (chunk, *summary, GapSlice::empty(), ChunkSummary::new())
+        // } else {
+        let (rest, rest_summary, last, last_summary, _) =
+            <Self as DoubleEndedUnitMetric<GapBuffer<MAX_BYTES>>>::last_unit(
+                chunk, summary,
+            );
 
-            (rest, rest_summary, last, last_summary)
-        }
+        (rest, rest_summary, last, last_summary)
+        // }
     }
 }
 

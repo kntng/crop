@@ -12,11 +12,7 @@ use super::metrics::{ByteMetric, ChunkSummary};
 use super::utils::{panic_messages as panic, *};
 use crate::range_bounds_to_start_end;
 use crate::tree::{
-    AsSlice,
-    BalancedLeaf,
-    BaseMeasured,
-    ReplaceableLeaf,
-    Summarize,
+    AsSlice, BalancedLeaf, BaseMeasured, ReplaceableLeaf, Summarize,
 };
 
 /// A [gap buffer] with a max capacity of `2^16 - 1` bytes.
@@ -47,7 +43,8 @@ impl<const MAX_BYTES: usize> core::fmt::Debug for GapBuffer<MAX_BYTES> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         f.write_str("\"")?;
         debug_no_quotes(self.left_chunk(), f)?;
-        write!(f, "{:~^1$}", "", self.len_gap())?;
+        // write!(f, "{:~^1$}", "", self.len_gap())?;
+        write!(f, "[GAP {}]", self.len_gap())?;
         debug_no_quotes(self.right_chunk(), f)?;
         f.write_str("\"")
     }
@@ -457,16 +454,6 @@ impl<const MAX_BYTES: usize> GapBuffer<MAX_BYTES> {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
-    }
-
-    /// The right chunk if it's not empty, or the left one otherwise.
-    #[inline]
-    pub(super) fn last_chunk(&self) -> &str {
-        if self.len_right() == 0 {
-            self.left_chunk()
-        } else {
-            self.right_chunk()
-        }
     }
 
     /// Returns the left chunk of this buffer as a string slice.

@@ -19,16 +19,16 @@ pub trait BaseMeasured: Summarize {
 }
 
 pub trait AsSlice: Summarize {
-    type Slice<'a>: Copy + Summarize<Summary = Self::Summary>
+    type Slice<'a>: Copy + Summarize<Summary = Self::Summary> + Default
     where
         Self: 'a;
 
     fn as_slice(&self) -> Self::Slice<'_>;
 }
 
-pub trait Leaf: Summarize + BaseMeasured + AsSlice {}
+pub trait Leaf: Summarize + BaseMeasured + AsSlice + Default + Clone {}
 
-impl<T: Summarize + BaseMeasured + AsSlice> Leaf for T {}
+impl<T: Summarize + BaseMeasured + AsSlice + Default + Clone> Leaf for T {}
 
 pub trait BalancedLeaf: Leaf + for<'a> From<Self::Slice<'a>> {
     /// Returns whether the leaf node is too small to be on its own and should

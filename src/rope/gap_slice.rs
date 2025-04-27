@@ -15,7 +15,8 @@ impl core::fmt::Debug for GapSlice<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         f.write_str("\"")?;
         debug_no_quotes(self.left_chunk(), f)?;
-        write!(f, "{:~^1$}", "", self.len_gap())?;
+        // write!(f, "{:~^1$}", "", self.len_gap())?;
+        write!(f, "[GAP {}]", self.len_gap())?;
         debug_no_quotes(self.right_chunk(), f)?;
         f.write_str("\"")
     }
@@ -286,6 +287,8 @@ impl<'a> GapSlice<'a> {
                 len_right: 0,
             };
 
+            println!("L summary {:?}", self.left_summary);
+            println!("LL summary {:?}", left_left_summary);
             let right = Self {
                 bytes: bytes_right,
                 left_summary: self.left_summary - left_left_summary,

@@ -484,8 +484,10 @@ impl<'a> Iterator for Lines<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         let (tree_slice, ByteMetric(advance)) = self.units.next()?;
         self.lines_yielded += 1;
+        println!("Yielded {}/{}", self.lines_yielded, self.lines_total);
 
         let mut slice = RopeSlice { tree_slice };
+        println!("{:?}", slice);
 
         // This handles CRLF pairs that have been split across chunks. For
         // example, if we have "aaa\r" and "\nbbb" we should yield "aaa", but
