@@ -107,9 +107,9 @@ impl<'a, const ARITY: usize, L: Leaf, M: UnitMetric<L>> Iterator
         let (tree_slice, advance) =
             if M::measure(&iter.start_summary) > M::zero() {
                 iter.next_unit_in_leaf()
-            } else if iter.units_total > iter.units_yielded {
+            } else if iter.units_total > iter.units_yielded + M::one() {
                 iter.next_unit_in_range()
-            } else if iter.base_total > iter.base_yielded {
+            } else if iter.units_total > iter.units_yielded {
                 let (remainder, advance) = iter.remainder();
 
                 debug_assert_eq!(M::measure(&advance), M::zero());
@@ -120,6 +120,7 @@ impl<'a, const ARITY: usize, L: Leaf, M: UnitMetric<L>> Iterator
                 );
 
                 iter.base_yielded = iter.base_total;
+                iter.units_yielded += M::one();
 
                 return Some((remainder, L::BaseMetric::measure(&advance)));
             } else {
@@ -275,7 +276,7 @@ where
             base_yielded: L::BaseMetric::zero(),
             base_total: tree.base_measure(),
             units_yielded: M::zero(),
-            units_total: tree.measure::<M>(),
+            units_total: tree.measure::<M>() + M::one(),
         }
     }
 }
@@ -308,7 +309,7 @@ where
             base_yielded: L::BaseMetric::zero(),
             base_total: tree_slice.base_measure(),
             units_yielded: M::zero(),
-            units_total: tree_slice.measure::<M>(),
+            units_total: tree_slice.measure::<M>() + M::one(),
         }
     }
 }
@@ -853,16 +854,8 @@ impl<'a, const N: usize, L: Leaf, M: UnitMetric<L>> UnitsForward<'a, N, L, M> {
     /// remainder to yield.
     #[inline]
     fn remainder(&mut self) -> (TreeSlice<'a, N, L>, L::Summary) {
-        debug_assert_eq!(self.units_total, self.units_yielded);
-        debug_assert!(self.base_total > self.base_yielded);
-
-        if L::BaseMetric::measure(&self.start_summary) == L::BaseMetric::zero()
-        {
-            let (next_slice, next_summary) = self.next_leaf();
-            self.yielded_in_leaf = L::Summary::default();
-            self.start_slice = next_slice;
-            self.start_summary = next_summary;
-        }
+        debug_assert_eq!(self.units_total, self.units_yielded + M::one());
+        debug_assert!(self.base_total >= self.base_yielded);
 
         // First, check if the leaf node is the root. If it is we're done.
         if self.base_total - self.base_yielded
