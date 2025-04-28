@@ -155,6 +155,7 @@ impl<const ARITY: usize, L: Leaf, M: DoubleEndedUnitMetric<L>>
                     debug_assert_eq!(M::measure(&advance), M::zero());
 
                     iter.base_remaining -= L::BaseMetric::measure(&advance);
+                    iter.units_remaining -= M::one();
 
                     return Some((
                         remainder,
@@ -845,7 +846,7 @@ impl<'a, const N: usize, L: Leaf, M: UnitMetric<L>> UnitsForward<'a, N, L, M> {
     }
 
     /// This is the analogous of [`UnitsBackward::remainder()`] when iterating
-    /// forward. Check the doc comment of that function as most of it applies
+    /// forward. Check the doc comm/ent of that function as most of it applies
     /// 1:1 to this.
     ///
     /// The most notable difference is that this function doesn't need to wrap
@@ -995,7 +996,7 @@ where
             last_slice: None,
             base_start: L::BaseMetric::zero(),
             base_remaining: tree.base_measure(),
-            units_remaining: tree.root().measure::<M>(),
+            units_remaining: tree.root().measure::<M>() + M::one(),
         }
     }
 }
@@ -1026,7 +1027,7 @@ where
             )),
             base_start: L::BaseMetric::measure(&tree_slice.offset),
             base_remaining: tree_slice.base_measure(),
-            units_remaining: tree_slice.measure::<M>(),
+            units_remaining: tree_slice.measure::<M>() + M::one(),
         }
     }
 }
@@ -1740,7 +1741,7 @@ impl<'a, const N: usize, L: Leaf, M: DoubleEndedUnitMetric<L>>
             let (rest, rest_summary, slice, summary) =
                 M::remainder(self.end_slice, &self.end_summary);
 
-            if L::BaseMetric::measure(&summary) > L::BaseMetric::zero() {
+            if L::BaseMetric::measure(&summary) >= L::BaseMetric::zero() {
                 let offset = rest_summary.clone();
 
                 self.yielded_in_leaf += &summary;
