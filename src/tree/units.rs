@@ -95,6 +95,7 @@ impl<'a, const ARITY: usize, L: Leaf, M: UnitMetric<L>> Iterator
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
+        println!("NEXT SELF {:?}\n", self.remaining);
         if self.remaining == L::BaseMetric::zero() {
             return None;
         }
@@ -107,10 +108,22 @@ impl<'a, const ARITY: usize, L: Leaf, M: UnitMetric<L>> Iterator
 
         let (tree_slice, advance) =
             if M::measure(&iter.start_summary) > M::zero() {
+                println!(
+                    "NEXT UNIT IN LEAF for {:?}/{:?}",
+                    iter.units_yielded, iter.units_total
+                );
                 iter.next_unit_in_leaf()
-            } else if iter.units_total > iter.units_yielded {
+            } else if iter.units_total > iter.units_yielded + M::one() {
+                println!(
+                    "NEXT UNIT IN RANGE for {:?}/{:?}",
+                    iter.units_yielded, iter.units_total
+                );
                 iter.next_unit_in_range()
-            } else if iter.base_total > iter.base_yielded {
+            } else if iter.units_total > iter.units_yielded {
+                println!(
+                    "GET REMAINDER for {:?}/{:?}",
+                    iter.units_yielded, iter.units_total
+                );
                 let (remainder, advance) = iter.remainder();
 
                 debug_assert_eq!(M::measure(&advance), M::zero());
@@ -121,11 +134,14 @@ impl<'a, const ARITY: usize, L: Leaf, M: UnitMetric<L>> Iterator
                 );
 
                 iter.base_yielded = iter.base_total;
+                iter.units_yielded += M::one();
+                println!("REMAINDER {:?}\n", remainder);
 
                 return Some((remainder, L::BaseMetric::measure(&advance)));
             } else {
                 return None;
             };
+        println!("GOT SLICE {:?} \nWITH ADVANCE {:?}\n", tree_slice, advance);
 
         debug_assert_eq!(M::measure(&advance), M::one());
 
@@ -276,7 +292,7 @@ where
             base_yielded: L::BaseMetric::zero(),
             base_total: tree.base_measure(),
             units_yielded: M::zero(),
-            units_total: tree.measure::<M>(),
+            units_total: tree.measure::<M>() + M::one(),
         }
     }
 }
@@ -309,7 +325,7 @@ where
             base_yielded: L::BaseMetric::zero(),
             base_total: tree_slice.base_measure(),
             units_yielded: M::zero(),
-            units_total: tree_slice.measure::<M>(),
+            units_total: tree_slice.measure::<M>() + M::one(),
         }
     }
 }
@@ -854,16 +870,18 @@ impl<'a, const N: usize, L: Leaf, M: UnitMetric<L>> UnitsForward<'a, N, L, M> {
     /// remainder to yield.
     #[inline]
     fn remainder(&mut self) -> (TreeSlice<'a, N, L>, L::Summary) {
-        debug_assert_eq!(self.units_total, self.units_yielded);
-        debug_assert!(self.base_total > self.base_yielded);
+        debug_assert_eq!(self.units_total, self.units_yielded + M::one());
+        debug_assert!(self.base_total >= self.base_yielded);
 
-        if L::BaseMetric::measure(&self.start_summary) == L::BaseMetric::zero()
-        {
-            let (next_slice, next_summary) = self.next_leaf();
-            self.yielded_in_leaf = L::Summary::default();
-            self.start_slice = next_slice;
-            self.start_summary = next_summary;
-        }
+        println!("SELF {:?}\n", self);
+
+        // if L::BaseMetric::measure(&self.start_summary) == L::BaseMetric::zero()
+        // {
+        //     let (next_slice, next_summary) = self.next_leaf();
+        //     self.yielded_in_leaf = L::Summary::default();
+        //     self.start_slice = next_slice;
+        //     self.start_summary = next_summary;
+        // }
 
         // First, check if the leaf node is the root. If it is we're done.
         if self.base_total - self.base_yielded
@@ -1742,7 +1760,7 @@ impl<'a, const N: usize, L: Leaf, M: DoubleEndedUnitMetric<L>>
     /// always return `None`.
     #[inline]
     fn remainder(&mut self) -> Option<(TreeSlice<'a, N, L>, L::Summary)> {
-        debug_assert!(self.base_remaining > L::BaseMetric::zero());
+        debug_assert!(self.base_remaining >= L::BaseMetric::zero());
 
         if M::measure(&self.end_summary) > M::zero() {
             let (rest, rest_summary, slice, summary) =
