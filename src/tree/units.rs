@@ -109,11 +109,9 @@ impl<'a, const ARITY: usize, L: Leaf, M: UnitMetric<L>> Iterator
         let (tree_slice, advance) =
             if M::measure(&iter.start_summary) > M::zero() {
                 iter.next_unit_in_leaf()
-            } else if iter.units_total <= iter.units_yielded {
-                return None;
             } else if iter.units_total - M::one() > iter.units_yielded {
                 iter.next_unit_in_range()
-            } else if iter.base_total > iter.base_yielded {
+            } else if iter.units_total > iter.units_yielded {
                 let (remainder, advance) = iter.remainder();
 
                 debug_assert_eq!(M::measure(&advance), M::zero());
@@ -124,6 +122,7 @@ impl<'a, const ARITY: usize, L: Leaf, M: UnitMetric<L>> Iterator
                 );
 
                 iter.base_yielded = iter.base_total;
+                iter.units_yielded += M::one();
 
                 return Some((remainder, L::BaseMetric::measure(&advance)));
             } else {
@@ -150,6 +149,7 @@ impl<const ARITY: usize, L: Leaf, M: DoubleEndedUnitMetric<L>>
         }
 
         let iter = &mut self.backward;
+        println!("curr iter back {:?}", iter);
 
         if !iter.is_initialized {
             iter.initialize();
@@ -161,7 +161,6 @@ impl<const ARITY: usize, L: Leaf, M: DoubleEndedUnitMetric<L>>
                     iter.base_remaining -= L::BaseMetric::measure(&advance);
                     iter.units_remaining -= M::one();
 
-                    println!("curr iter back {:?}", iter);
                     return Some((
                         remainder,
                         L::BaseMetric::measure(&advance),
@@ -170,7 +169,6 @@ impl<const ARITY: usize, L: Leaf, M: DoubleEndedUnitMetric<L>>
             }
         }
 
-        println!("curr iter back {:?}", iter);
         #[rustfmt::skip]
         let (tree_slice, advance) =
             if M::measure(&iter.end_summary) > M::one() {
@@ -182,6 +180,7 @@ impl<const ARITY: usize, L: Leaf, M: DoubleEndedUnitMetric<L>>
             } else {
                 return None;
             };
+        println!("yielding {:?}", tree_slice);
 
         debug_assert_eq!(M::measure(&advance), M::one());
 
@@ -885,10 +884,11 @@ impl<'a, const N: usize, L: Leaf, M: UnitMetric<L>> UnitsForward<'a, N, L, M> {
     #[inline]
     fn remainder(&mut self) -> (TreeSlice<'a, N, L>, L::Summary) {
         debug_assert_eq!(self.units_total - M::one(), self.units_yielded);
-        debug_assert!(self.base_total > self.base_yielded);
+        // debug_assert!(self.base_total > self.base_yielded);
 
         if L::BaseMetric::measure(&self.start_summary) == L::BaseMetric::zero()
         {
+            println!("1");
             let (next_slice, next_summary) = self.next_leaf();
             self.yielded_in_leaf = L::Summary::default();
             self.start_slice = next_slice;
@@ -899,9 +899,11 @@ impl<'a, const N: usize, L: Leaf, M: UnitMetric<L>> UnitsForward<'a, N, L, M> {
         if self.base_total - self.base_yielded
             == L::BaseMetric::measure(&self.start_summary)
         {
+            println!("2");
             let summary = core::mem::take(&mut self.start_summary);
 
             let advance = summary.clone();
+            println!("advance {:?}", advance);
 
             return (
                 TreeSlice {
@@ -918,6 +920,7 @@ impl<'a, const N: usize, L: Leaf, M: UnitMetric<L>> UnitsForward<'a, N, L, M> {
             );
         }
 
+        println!("3");
         let start_slice = self.start_slice;
         let start_summary = core::mem::take(&mut self.start_summary);
 

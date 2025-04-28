@@ -18,6 +18,7 @@ pub trait BaseMeasured: Summarize {
     type BaseMetric: Metric<Self::Summary>;
 }
 
+/// NOTE: THESE TRAITS with Default + UnitsForward::next_leaf
 pub trait AsSlice: Summarize {
     type Slice<'a>: Copy + Summarize<Summary = Self::Summary> + Default
     where

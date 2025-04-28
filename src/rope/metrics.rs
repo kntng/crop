@@ -117,8 +117,7 @@ impl SubAssign<Self> for ChunkSummary {
     #[inline]
     fn sub_assign(&mut self, rhs: Self) {
         self.bytes -= rhs.bytes;
-        println!("LHS {:?}", self);
-        println!("RHS {:?}", rhs);
+        println!("LHS {:?} - RHS {:?}", self, rhs);
 
         self.line_breaks -= rhs.line_breaks;
         #[cfg(feature = "utf16-metric")]
