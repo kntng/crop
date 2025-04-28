@@ -426,6 +426,102 @@ fn iter_lines_forward_backward() {
     assert_eq!(None, backward.next());
 }
 
+#[test]
+fn iter_lines_len_mismatch_forward() {
+    let r = Rope::from("foo\n");
+    assert_eq!(r.lines().len(), 2);
+
+    let mut lines = r.lines();
+    assert_eq!(lines.next().unwrap(), "foo");
+    assert_eq!(lines.next().unwrap(), "");
+    assert_eq!(lines.next(), None);
+}
+
+#[test]
+fn iter_lines_len_mismatch_backward() {
+    let r = Rope::from("foo\n");
+    assert_eq!(r.lines().len(), 2);
+
+    let mut lines = r.lines();
+    assert_eq!(lines.next_back().unwrap(), "bar");
+    assert_eq!(lines.next_back().unwrap(), "foo");
+    assert_eq!(lines.next_back(), None);
+}
+
+#[test]
+fn iter_raw_lines_len_mismatch_forward() {
+    let r = Rope::from("foo\n");
+    assert_eq!(r.raw_lines().len(), 2);
+
+    let mut lines = r.raw_lines();
+    assert_eq!(lines.next().unwrap(), "foo\n");
+    assert_eq!(lines.next().unwrap(), "");
+    assert_eq!(lines.next(), None);
+}
+
+#[test]
+fn iter_raw_lines_len_mismatch_backward() {
+    let r = Rope::from("foo\n");
+    assert_eq!(r.raw_lines().len(), 2);
+
+    let mut lines = r.raw_lines();
+    assert_eq!(lines.next_back().unwrap(), "");
+    assert_eq!(lines.next_back().unwrap(), "foo\n");
+    assert_eq!(lines.next_back(), None);
+}
+
+#[test]
+fn iter_multi_lines_len_mismatch_forward() {
+    let r = Rope::from("foo\nbar\r\nbaz\n");
+    assert_eq!(r.lines().len(), 4);
+
+    let mut lines = r.lines();
+    assert_eq!(lines.next().unwrap(), "foo");
+    assert_eq!(lines.next().unwrap(), "bar");
+    assert_eq!(lines.next().unwrap(), "baz");
+    assert_eq!(lines.next().unwrap(), "");
+    assert_eq!(lines.next(), None);
+}
+
+#[test]
+fn iter_multi_lines_len_mismatch_backward() {
+    let r = Rope::from("foo\nbar\r\nbaz\n");
+    assert_eq!(r.lines().len(), 4);
+
+    let mut lines = r.lines();
+    assert_eq!(lines.next_back().unwrap(), "");
+    assert_eq!(lines.next_back().unwrap(), "baz");
+    assert_eq!(lines.next_back().unwrap(), "bar");
+    assert_eq!(lines.next_back().unwrap(), "foo");
+    assert_eq!(lines.next_back(), None);
+}
+
+#[test]
+fn iter_multi_raw_lines_len_mismatch_forward() {
+    let r = Rope::from("foo\nbar\r\nbaz\n");
+    assert_eq!(r.raw_lines().len(), 4);
+
+    let mut lines = r.raw_lines();
+    assert_eq!(lines.next().unwrap(), "foo\n");
+    assert_eq!(lines.next().unwrap(), "bar\r\n");
+    assert_eq!(lines.next().unwrap(), "baz\n");
+    assert_eq!(lines.next().unwrap(), "");
+    assert_eq!(lines.next(), None);
+}
+
+#[test]
+fn iter_multi_raw_lines_len_mismatch_backward() {
+    let r = Rope::from("foo\nbar\r\nbaz\n");
+    assert_eq!(r.raw_lines().len(), 4);
+
+    let mut lines = r.raw_lines();
+    assert_eq!(lines.next_back().unwrap(), "");
+    assert_eq!(lines.next_back().unwrap(), "baz\n");
+    assert_eq!(lines.next_back().unwrap(), "bar\r\n");
+    assert_eq!(lines.next_back().unwrap(), "foo\n");
+    assert_eq!(lines.next_back(), None);
+}
+
 #[cfg_attr(miri, ignore)]
 #[test]
 fn iter_lines_over_random_slices() {
@@ -487,10 +583,7 @@ fn iter_raw_lines_0() {
     assert_eq!("Hey \r\n", lines.next().unwrap());
     assert_eq!("this contains\n", lines.next().unwrap());
     assert_eq!("mixed line breaks, emojis -> \r\n", lines.next().unwrap());
-    assert_eq!(
-        "🐕‍🦺 and other -> こんにちは chars.\r\n",
-        lines.next().unwrap()
-    );
+    assert_eq!("🐕‍🦺 and other -> こんにちは chars.\r\n", lines.next().unwrap());
     assert_eq!("Can we iterate\n", lines.next().unwrap());
     assert_eq!("over this?\n", lines.next().unwrap());
     assert_eq!("\r\n", lines.next().unwrap());
@@ -513,10 +606,7 @@ fn iter_raw_lines_backward_0() {
     assert_eq!("\r\n", lines.next().unwrap());
     assert_eq!("over this?\n", lines.next().unwrap());
     assert_eq!("Can we iterate\n", lines.next().unwrap());
-    assert_eq!(
-        "🐕‍🦺 and other -> こんにちは chars.\r\n",
-        lines.next().unwrap()
-    );
+    assert_eq!("🐕‍🦺 and other -> こんにちは chars.\r\n", lines.next().unwrap());
     assert_eq!("mixed line breaks, emojis -> \r\n", lines.next().unwrap());
     assert_eq!("this contains\n", lines.next().unwrap());
     assert_eq!("Hey \r\n", lines.next().unwrap());
