@@ -289,20 +289,20 @@ fn iter_lines_0() {
     assert_eq!(2, r.byte_slice(..).lines().count());
 
     let r = Rope::from("a\nb\n");
-    assert_eq!(2, r.lines().count());
-    assert_eq!(2, r.byte_slice(..).lines().count());
+    assert_eq!(3, r.lines().count());
+    assert_eq!(3, r.byte_slice(..).lines().count());
 
     let r = Rope::from("\na\nb");
     assert_eq!(3, r.lines().count());
     assert_eq!(3, r.byte_slice(..).lines().count());
 
     let r = Rope::from("\n\n\n");
-    assert_eq!(3, r.lines().count());
-    assert_eq!(3, r.byte_slice(..).lines().count());
-
-    let r = Rope::from("\n\n\n\n");
     assert_eq!(4, r.lines().count());
     assert_eq!(4, r.byte_slice(..).lines().count());
+
+    let r = Rope::from("\n\n\n\n");
+    assert_eq!(5, r.lines().count());
+    assert_eq!(5, r.byte_slice(..).lines().count());
 
     let r = Rope::from("\n\n\na");
     assert_eq!(4, r.lines().count());
@@ -316,8 +316,8 @@ fn iter_lines_1() {
     let rope = Rope::from(s);
     let slice = rope.byte_slice(..);
 
-    assert_eq!(rope.lines().count(), s.lines().count());
-    assert_eq!(slice.lines().count(), s.lines().count());
+    assert_eq!(rope.lines().count(), s.lines().count() + 1);
+    assert_eq!(slice.lines().count(), s.lines().count() + 1);
 
     for ((rope_line, slice_line), s_line) in
         rope.lines().zip(slice.lines()).zip(s.lines())
@@ -334,8 +334,8 @@ fn iter_lines_2() {
     let rope = Rope::from(s);
     let slice = rope.byte_slice(..);
 
-    assert_eq!(rope.lines().count(), s.lines().count());
-    assert_eq!(slice.lines().count(), s.lines().count());
+    assert_eq!(rope.lines().count(), s.lines().count() + 1);
+    assert_eq!(slice.lines().count(), s.lines().count() + 1);
 
     for ((rope_line, slice_line), s_line) in
         rope.lines().zip(slice.lines()).zip(s.lines())
@@ -416,9 +416,11 @@ fn iter_lines_forward_backward() {
     assert_eq!("a", forward.next().unwrap());
     assert_eq!("b", forward.next().unwrap());
     assert_eq!("c", forward.next().unwrap());
+    assert_eq!("", forward.next().unwrap());
     assert_eq!(None, forward.next());
 
     let mut backward = r.lines().rev();
+    assert_eq!("", backward.next().unwrap());
     assert_eq!("c", backward.next().unwrap());
     assert_eq!("b", backward.next().unwrap());
     assert_eq!("a", backward.next().unwrap());
